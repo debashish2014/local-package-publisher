@@ -4,6 +4,7 @@
   "description": "A utility app for publishing your npm packages locally for testing",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,5 +24,12 @@
   "bugs": {
     "url": "https://github.com/debashish2014/local-package-publisher/issues"
   },
-  "homepage": "https://github.com/debashish2014/local-package-publisher#readme"
+  "homepage": "https://github.com/debashish2014/local-package-publisher#readme",
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "cross-spawn": "^6.0.5",
+    "fs-extra": "^7.0.1",
+    "tar-pack": "^3.4.1",
+    "tmp": "0.0.33"
+  }
 }
