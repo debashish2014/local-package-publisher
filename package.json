@@ -1,0 +1,27 @@
+{
+  "name": "local-package-publisher",
+  "version": "1.0.0",
+  "description": "A utility app for publishing your npm packages locally for testing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/debashish2014/local-package-publisher.git"
+  },
+  "keywords": [
+    "local",
+    "package",
+    "test",
+    "publisher",
+    "npm",
+    "tester"
+  ],
+  "author": "Debashish Pal",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/debashish2014/local-package-publisher/issues"
+  },
+  "homepage": "https://github.com/debashish2014/local-package-publisher#readme"
+}
