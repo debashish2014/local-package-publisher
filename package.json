@@ -21,6 +21,10 @@
   ],
   "author": "Debashish Pal",
   "license": "MIT",
+  "files": [
+    "index.js",
+    "package-lock.json"
+  ],
   "bugs": {
     "url": "https://github.com/debashish2014/local-package-publisher/issues"
   },

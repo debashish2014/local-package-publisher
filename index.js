@@ -1,8 +1,9 @@
 const spawn = require('cross-spawn');
 const fs = require('fs-extra');
 const tmp = require('tmp');
-var read = require('fs').createReadStream
-var unpack = require('tar-pack').unpack
+var read = require('fs').createReadStream;
+var unpack = require('tar-pack').unpack;
+const chalk = require('chalk');
 
 const dirName = '.local-pack';
 const configFile = 'settings.json';
@@ -173,8 +174,8 @@ isNodeProject()
         linkDirGlobal(packageDir);
     })
     .then(() => {
-        console.log('package published successfully');
+        console.log(chalk.green('Package published successfully'));
     })
     .catch(err => {
-        console.log('Failed to publish a local package')
+        console.log(chalk.read('Failed to publish a local package'));
     })
