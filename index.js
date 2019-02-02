@@ -1,10 +1,8 @@
 const spawn = require('cross-spawn');
 const fs = require('fs-extra');
-const path = require('path');
 const tmp = require('tmp');
 var read = require('fs').createReadStream
 var unpack = require('tar-pack').unpack
-const os = require('os');
 
 const dirName = '.local-pack';
 const configFile = 'settings.json';
@@ -43,7 +41,6 @@ function runPack() {
             resolve();
         });
     });
-
 }
 
 function movePackageToTempDir(packagePath, destinationPath) {
@@ -85,9 +82,24 @@ function unpackPackage(packageFilePath, unpackDir) {
     });
 }
 
-function linkItGlobal() {
+function linkDirGlobal(directory) {
     return new Promise((resolve, reject) => {
-        resolve();
+        let command;
+        let args;
+
+        command = 'npm';
+        args = [
+            'link'
+        ]
+
+        process.chdir(directory);
+        const child = spawn(command, args, { stdio: 'inherit' });
+        child.on('close', code => {
+            if (code !== 0) {
+                reject('Failed to link the package');
+            }
+            resolve();
+        });
     });
 }
 
@@ -147,10 +159,20 @@ isNodeProject()
         })
     })
     .then((unpackDetails) => {
-        return unpackPackage(unpackDetails.PackageFilePath, unpackDetails.PackageDir);
+        return new Promise((resolve, reject) => {
+            return unpackPackage(unpackDetails.PackageFilePath, unpackDetails.PackageDir)
+                .then(() => {
+                    resolve(unpackDetails.PackageDir);
+                })
+                .catch(err => {
+                    reject(err);
+                });
+        });
+    })
+    .then((packageDir) => {
+        linkDirGlobal(packageDir);
     })
     .then(() => {
-        linkItGlobal();
         console.log('package published successfully');
     })
     .catch(err => {
