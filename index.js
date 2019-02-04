@@ -45,7 +45,7 @@ function isNodeProject() {
                 resolve(packageName);
             })
             .catch(err => {
-                console.log(chalk.yellow('Please run the command in a valid node project'));
+                console.log(chalk.yellow('Package.json is missing. Please run the command in a valid node project'));
                 reject(err)
             })
 
@@ -247,10 +247,10 @@ function publish() {
             linkDirGlobal(packageDir);
         })
         .then(() => {
-            console.log(chalk.green('Package published successfully'));
+            console.log(chalk.green('Package published successfully to global'));
         })
         .catch(err => {
-            console.log(chalk.red('Failed to publish local package'));
+            console.log(chalk.red('Failed to publish package to global'));
         });
 }
 
@@ -263,8 +263,11 @@ function unpublish() {
         .then((tempDir) => {
             unlinkDirGlobal(tempDir);
         })
+        .then(() => {
+            console.log(chalk.green('Package has been removed from global'));
+        })
         .catch(err => {
-            console.log(chalk.red('Failed to unpblish the package'));
+            console.log(chalk.red('Failed to remove package from global'));
         });
 }
 
