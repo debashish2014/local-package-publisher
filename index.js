@@ -313,7 +313,8 @@ function publish() {
             linkDirGlobal(packageDir);
         })
         .then(() => {
-            console.log(chalk.green(`${projectName} package published successfully to global`));
+            console.log(chalk.yellow(`${projectName}`) + chalk.green(` package published successfully to global`));
+            console.log('To consume this package, run ' + chalk.yellow(`npm link ${projectName}`) + ' in target project');
         })
         .catch(err => {
             console.log(chalk.red('Failed to publish package to global'));
