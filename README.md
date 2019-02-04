@@ -3,7 +3,6 @@ A utility app for publishing your npm packages locally for testing, which works 
 
 [![npm Package](https://img.shields.io/npm/v/local-package-publisher.svg)](https://www.npmjs.com/package/local-package-publisher)
 [![License](https://img.shields.io/npm/l/local-package-publisher.svg)](https://github.com/debashish2014/local-package-publisher/blob/master/LICENSE)
-[![downloads per month](http://img.shields.io/npm/dm/local-package-publisher.svg)](https://www.npmjs.com/package/local-package-publisher)
 
 # About
 You have created this awesome npm package and you want to test it locally, before publishing to [NPM repository](https://www.npmjs.com). What are the options you have? 
