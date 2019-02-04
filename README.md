@@ -16,9 +16,11 @@ Well, below are some of the possible options, but each of them have some caveat,
 
 2. **Local NPM Repository** :
 
-    You can publish the package under test to a local npm repository ex. [Sinopia](https://github.com/rlidwka/sinopia), [Verdaccio](https://verdaccio.org/), [local-npm](https://github.com/local-npm/local-npm). 
+    You can publish the package under test to a local npm repository hosted using these awesome projects like [Sinopia](https://github.com/rlidwka/sinopia), [Verdaccio](https://verdaccio.org/), [local-npm](https://github.com/local-npm/local-npm) etc. 
 
-    **Cons**: You will need to change the registry which npm is pointing to by running `npm set registry http://localhost:[port]/`.
+    **Cons**: You will need to change the registry which npm is pointing to by running `npm set registry http://localhost:[port]`. 
+    
+    For most of us this might not be a feasible option due to several reasons, but if it does then it is indeed a option worth considering.
 
 3. **Manual Process** :
 
@@ -26,7 +28,7 @@ Well, below are some of the possible options, but each of them have some caveat,
 
     Then, unzip the tar file content to a directory, separate from your project.
 
-    Go, to this new directory where the tar contents has been extracted, and run `npm link` from the directory root.
+    Go, to this new directory where the tar contents has been extracted, and run `npm link` from the directory root. Rest of the steps are same as option 1.
 
     **Cons**: The process is a bit cumbersome and involves a lot of steps.
 
