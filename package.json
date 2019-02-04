@@ -1,6 +1,6 @@
 {
   "name": "local-package-publisher",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A utility app for publishing your npm packages locally for testing",
   "main": "index.js",
   "scripts": {
