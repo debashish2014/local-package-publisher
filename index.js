@@ -345,7 +345,7 @@ function unpublish() {
             deleteLocalPackSettingsDirectory();
         })
         .then(() => {
-            console.log(chalk.green(`${projectName} package has been removed from global`));
+            console.log(chalk.yellow(`${projectName}`) + chalk.green(` package has been removed from global`));
         })
         .catch(err => {
             console.log(chalk.red('Failed to remove package from global'));
