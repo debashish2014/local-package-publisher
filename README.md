@@ -35,5 +35,86 @@ Well, below are some of the possible options, but each of them have some caveat,
 
 I have found out the third option i.e. **Manual Process** to be most elegant, even though it requires more steps, since it relies on `npm pack` and it ensures that the content it packs will be same as that of when it will be actually published to NPM repository.
 
-This project is an effort to automate this manual process.
+### This project is an effort to automate this manual process.
 
+# Installation
+
+    npm install --save-dev local-package-publisher
+
+To install the package locally to the project
+
+or 
+
+    npm install -g local-package-publisher
+
+To install the package globally
+
+# Usage
+
+Say, you have created a project with the name `my-awesome-new-package`
+
+To publish this package, go to root directory of the project and run below command:
+
+```
+local-package-publisher -p
+```
+or 
+
+```
+local-package-publisher --publish
+```
+Once you run this command it will give you below success message
+
+### `my-awesome-new-package` package published successfully to global
+
+This command will publish the package globally. It will also create a directory .local-pack with a setings.json file in it, in your project. Please do not delete it.
+
+You can safely add below line to `.gitignore` as well.
+
+```
+.local-pack
+```
+
+**Thats it !!** Now whenever you do any modification in the project and you want to publish the changes, just run the `local-package-publisher -p` command again.
+
+#
+
+Now, to consume this published package, just go the root directory of the project where you want to consume it, and run below command. It need to be done only once.
+
+```
+npm link my-awesome-new-package
+```
+**Note**: No need to run above command again and again.
+
+#
+
+Once, you are done and you want to remove the published package from global, run below command in the root directory of `my-awesome-new-package` project:
+
+```
+local-package-publisher -u
+```
+or 
+
+```
+local-package-publisher --unpublish
+```
+
+### `my-awesome-new-package` package has been removed from global
+
+# Credit
+
+`local-package-publisher` wouldn't be possible without using the modules from the following authors:
+
+- [Sindre Sorhus](https://github.com/sindresorhus)
+- [Josh Junon](https://github.com/qix-)
+- [JP Richardson](https://github.com/jprichardson)
+- [TJ Holowaychuk](https://github.com/tj)
+- [Moxystudio](https://github.com/moxystudio)
+- [Forbes Lindesay](https://github.com/ForbesLindesay-Unmaintained)
+- [KARASZI István](https://github.com/raszi)
+
+# License
+
+Licensed under [MIT](http://www.opensource.org/licenses/mit-license.php)
+
+Copyright (c) 2019-2020 [Debashish Pal](https://github.com/debashish2014)

@@ -32,15 +32,17 @@ const unpack = require('tar-pack').unpack;
 const chalk = require('chalk');
 const commander = require('commander');
 
-const dirName = '.local-pack';
+const dirNameLocalPack = '.local-pack';
 const configFile = 'settings.json';
-let file = `./${dirName}/${configFile}`;
+let file = `./${dirNameLocalPack}/${configFile}`;
+let projectName;
 let packageName;
 
 function isNodeProject() {
     return new Promise((resolve, reject) => {
         fs.readJson('./package.json')
             .then(obj => {
+                projectName = obj.name;
                 packageName = `${obj.name}-${obj.version}.tgz`;
                 resolve(packageName);
             })
@@ -122,55 +124,74 @@ function linkDirGlobal(directory) {
         ]
 
         process.chdir(directory);
-        const child = spawn(command, args, { stdio: 'inherit' });
-        child.on('close', code => {
-            if (code !== 0) {
-                reject('Failed to link the package');
-            }
+        try {
+            spawn.sync(command, args, { stdio: 'inherit' });
             resolve();
-        });
+        }
+        catch (err) {
+            reject(err);
+        }
+
     });
 }
 
 function unlinkDirGlobal(directory) {
     return new Promise((resolve, reject) => {
-        let command;
-        let args;
+        fs.pathExists(file)
+            .then((exists) => {
+                if (exists) {
+                    let command;
+                    let args;
 
-        command = 'npm';
-        args = [
-            'unlink'
-        ]
+                    command = 'npm';
+                    args = [
+                        'unlink'
+                    ]
 
-        process.chdir(directory);
-        const child = spawn(command, args, { stdio: 'inherit' });
-        child.on('close', code => {
-            if (code !== 0) {
-                reject('Failed to unlink the package');
-            }
-            resolve();
-        });
-    });
-}
+                    const currentWorkingDirectory = process.cwd();
+                    process.chdir(directory);
+                    spawn.sync(command, args, { stdio: 'inherit' });
+                    process.chdir(currentWorkingDirectory);
 
-function readTempDirectory() {
-    return new Promise((resolve, reject) => {
-        fs.readJson(file, { throws: false })
-            .then(settings => {
-                if (settings === null) {
-                    reject('settings not found');
-                }
-                else if (!settings.TempPath || settings.TempPath === '') {
-                    reject('TempPath not found');
+                    resolve();
                 }
                 else {
-                    resolve(settings.TempPath);
+                    resolve();
                 }
             })
             .catch(err => {
                 reject(err);
             })
+    });
+}
 
+function readTempDirectory() {
+    return new Promise((resolve, reject) => {
+        fs.pathExists(file)
+            .then((exists) => {
+                if (exists) {
+                    fs.readJson(file, { throws: false })
+                        .then(settings => {
+                            if (settings === null) {
+                                reject('settings not found');
+                            }
+                            else if (!settings.TempPath || settings.TempPath === '') {
+                                reject('TempPath not found');
+                            }
+                            else {
+                                resolve(settings.TempPath);
+                            }
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                }
+                else
+                    resolve('');
+            })
+            .catch(err => {
+                reject(err);
+            })
     });
 }
 
@@ -207,6 +228,51 @@ function getTemporaryDirectory() {
                 reject(err);
             })
     });
+}
+
+function deleteTemporaryDirectory(tempDir) {
+    return new Promise((resolve, reject) => {
+        fs.pathExists(tempDir)
+            .then((exists) => {
+                if (exists) {
+                    fs.remove(tempDir)
+                        .then(() => {
+                            resolve();
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                }
+                else {
+                    resolve();
+                }
+            })
+            .catch(err => {
+                reject(err);
+            })
+    })
+}
+
+
+function deleteLocalPackSettingsDirectory() {
+    return new Promise((resolve, reject) => {
+        fs.pathExists(dirNameLocalPack)
+            .then((exists) => {
+                if (exists)
+                    fs.remove(dirNameLocalPack)
+                        .then(() => {
+                            resolve();
+                        })
+                        .catch(err => {
+                            reject(err);
+                        })
+                else
+                    resolve();
+            })
+            .catch(err => {
+                reject(err);
+            });
+    })
 }
 
 //Publishes the package to global
@@ -247,7 +313,7 @@ function publish() {
             linkDirGlobal(packageDir);
         })
         .then(() => {
-            console.log(chalk.green('Package published successfully to global'));
+            console.log(chalk.green(`${projectName} package published successfully to global`));
         })
         .catch(err => {
             console.log(chalk.red('Failed to publish package to global'));
@@ -261,10 +327,24 @@ function unpublish() {
             return readTempDirectory();
         })
         .then((tempDir) => {
-            unlinkDirGlobal(tempDir);
+            return new Promise((resolve, reject) => {
+                unlinkDirGlobal(tempDir)
+                    .then(() => {
+                        resolve(tempDir);
+                    })
+                    .catch(err => {
+                        reject(err);
+                    });
+            });
+        })
+        .then((tempDir) => {
+            return deleteTemporaryDirectory(tempDir);
         })
         .then(() => {
-            console.log(chalk.green('Package has been removed from global'));
+            deleteLocalPackSettingsDirectory();
+        })
+        .then(() => {
+            console.log(chalk.green(`${projectName} package has been removed from global`));
         })
         .catch(err => {
             console.log(chalk.red('Failed to remove package from global'));
