@@ -34,16 +34,28 @@ const commander = require('commander');
 
 const dirNameLocalPack = '.local-pack';
 const configFile = 'settings.json';
+const archiveName = 'tgz';
+const logFileName = 'local-package-publisher.log';
 let file = `./${dirNameLocalPack}/${configFile}`;
 let projectName;
 let packageName;
+let projectNameInPackageJson;
 
 function isNodeProject() {
     return new Promise((resolve, reject) => {
         fs.readJson('./package.json')
             .then(obj => {
-                projectName = obj.name;
-                packageName = `${obj.name}-${obj.version}.tgz`;
+                if(obj.name.indexOf('@') === 0){
+                    let indexOfSlash = obj.name.indexOf('/');
+                    let scopeName = obj.name.substr(1, indexOfSlash - 1);
+                    let nameExcludingScope = obj.name.substr(indexOfSlash + 1, obj.name.length);
+                    projectName = `${scopeName}-${nameExcludingScope}`;                    
+                }else{
+                    projectName = obj.name;
+                }
+               
+                projectNameInPackageJson = obj.name;
+                packageName = `${projectName}-${obj.version}.${archiveName}`;
                 resolve(packageName);
             })
             .catch(err => {
@@ -96,7 +108,7 @@ function unpackPackage(packageFilePath, unpackDir) {
                 else {
                     fs.remove(packageFilePath)
                         .then(() => {
-                            fs.remove(`${unpackDir}/.local-pack`)
+                            fs.remove(`${unpackDir}/${dirNameLocalPack}`)
                                 .then(() => {
                                     resolve();
                                 })
@@ -277,7 +289,6 @@ function deleteLocalPackSettingsDirectory() {
 
 //Publishes the package to global
 function publish() {
-
     isNodeProject()
         .then(() => {
             return runPack();
@@ -313,10 +324,11 @@ function publish() {
             linkDirGlobal(packageDir);
         })
         .then(() => {
-            console.log(chalk.yellow(`${projectName}`) + chalk.green(` package published successfully to global`));
-            console.log('To consume this package, run ' + chalk.yellow(`npm link ${projectName}`) + ' in target project');
+            console.log(chalk.yellow(`${projectNameInPackageJson}`) + chalk.green(` package published successfully to global`));
+            console.log('To consume this package, run ' + chalk.yellow(`npm link ${projectNameInPackageJson}`) + ' in target project');
         })
         .catch(err => {
+            fs.writeFile(`${process.cwd()}/${logFileName}`, err);
             console.log(chalk.red('Failed to publish package to global'));
         });
 }
@@ -345,7 +357,7 @@ function unpublish() {
             deleteLocalPackSettingsDirectory();
         })
         .then(() => {
-            console.log(chalk.yellow(`${projectName}`) + chalk.green(` package has been removed from global`));
+            console.log(chalk.yellow(`${projectNameInPackageJson}`) + chalk.green(` package has been removed from global`));
         })
         .catch(err => {
             console.log(chalk.red('Failed to remove package from global'));
@@ -376,4 +388,5 @@ if (program.publish)
 
 if (program.unpublish)
     unpublish();
+
 
