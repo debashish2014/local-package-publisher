@@ -1,5 +1,5 @@
 {
-  "name": "@debashish/local-package-publisher",
+  "name": "local-package-publisher",
   "version": "1.0.3",
   "description": "A utility app for publishing your npm packages locally for testing",
   "main": "index.js",
