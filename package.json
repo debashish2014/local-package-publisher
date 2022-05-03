@@ -1,5 +1,5 @@
 {
-  "name": "local-package-publisher",
+  "name": "local-package-publisher-xos",
   "version": "1.0.4",
   "description": "A utility app for publishing your npm packages locally for testing",
   "main": "index.js",
@@ -21,7 +21,7 @@
     "npm",
     "tester"
   ],
-  "author": "Debashish Pal",
+  "author": "Ivan Richmond",
   "license": "MIT",
   "files": [
     "index.js",
