@@ -1,4 +1,14 @@
-# local-package-publisher
+# local-package-publisher-xos
+This is simply a cross-plaform fork of [![npm Package](https://img.shields.io/npm/v/local-package-publisher.svg)](https://www.npmjs.com/package/local-package-publisher).  It was forked off of `v1.0.4`.
+
+## Differences 
+
+* The main difference is that it uses the Node `path` module to make sure file paths are OS-independent.
+
+* It uses [yarn](https://yarnpkg.com/) instead of [npm](https://www.npmjs.com/), because `npm i` or `npm unlink` undoes all local package linking performed by `npm link`.  However, `yarn` has none of these problems, and comparible commands will not destroy local package links. 
+
+## What follows is the original Readme from that package.
+
 A utility app for publishing your npm packages locally for testing, which works !!
 
 [![npm Package](https://img.shields.io/npm/v/local-package-publisher.svg)](https://www.npmjs.com/package/local-package-publisher)
