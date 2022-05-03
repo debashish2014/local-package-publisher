@@ -31,6 +31,7 @@ const read = require('fs').createReadStream;
 const unpack = require('tar-pack').unpack;
 const chalk = require('chalk');
 const commander = require('commander');
+const packageManager = 'yarn';
 
 /**
  * Makes a cross-browser path out of an array of OS-specific paths.
@@ -82,7 +83,7 @@ function runPack() {
         let command;
         let args;
 
-        command = 'npm';
+        command = packageManager;
         args = [
             'pack'
         ]
@@ -141,7 +142,7 @@ function linkDirGlobal(directory) {
         let command;
         let args;
 
-        command = 'npm';
+        command = packageManager;
         args = [
             'link'
         ]
@@ -166,7 +167,7 @@ function unlinkDirGlobal(directory) {
                     let command;
                     let args;
 
-                    command = 'npm';
+                    command = packageManager;
                     args = [
                         'unlink'
                     ]
