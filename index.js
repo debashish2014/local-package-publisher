@@ -32,18 +32,29 @@ const unpack = require('tar-pack').unpack;
 const chalk = require('chalk');
 const commander = require('commander');
 
+/**
+ * Makes a cross-browser path out of an array of OS-specific paths.
+ * EXAMPLE: xosPath(['/foo','bar','qax']) returns cross-browser path
+ * for /foo/bar/qax in Posix.
+ * @param {array} paths Identical to param1 of path.join()
+ * @returns {string} Cross-browser path
+ */
+function xosPath(paths){
+    return path.normalize(path.join(paths));
+}
+
 const dirNameLocalPack = '.local-pack';
 const configFile = 'settings.json';
 const archiveName = 'tgz';
 const logFileName = 'local-package-publisher.log';
-let file = `./${dirNameLocalPack}/${configFile}`;
+let file = xosPath([dirNameLocalPack,configFile]);
 let projectName;
 let packageName;
 let projectNameInPackageJson;
 
 function isNodeProject() {
     return new Promise((resolve, reject) => {
-        fs.readJson('./package.json')
+        fs.readJson(xosPath(['./package.json']))
             .then(obj => {
                 if(obj.name.indexOf('@') === 0){
                     let indexOfSlash = obj.name.indexOf('/');
@@ -108,7 +119,7 @@ function unpackPackage(packageFilePath, unpackDir) {
                 else {
                     fs.remove(packageFilePath)
                         .then(() => {
-                            fs.remove(`${unpackDir}/${dirNameLocalPack}`)
+                            fs.remove(xosPath([unpackDir, dirNameLocalPack]))
                                 .then(() => {
                                     resolve();
                                 })
@@ -298,8 +309,8 @@ function publish() {
         })
         .then((tempDir) => {
             return new Promise((resolve, reject) => {
-                const packageFilePath = `./${packageName}`;
-                const destinationPath = `${tempDir}/${packageName}`;
+                const packageFilePath = xosPath(['./',packageName]);
+                const destinationPath = xosPath([tempDir,packageName]);
                 return movePackageToTempDir(packageFilePath, destinationPath)
                     .then(() => {
                         resolve({ PackageFilePath: destinationPath, PackageDir: tempDir });
@@ -328,7 +339,7 @@ function publish() {
             console.log('To consume this package, run ' + chalk.yellow(`npm link ${projectNameInPackageJson}`) + ' in target project');
         })
         .catch(err => {
-            fs.writeFile(`${process.cwd()}/${logFileName}`, err);
+            fs.writeFile(xosPath([process.cwd(),logFileName]), err);
             console.log(chalk.red('Failed to publish package to global'));
         });
 }
@@ -365,7 +376,7 @@ function unpublish() {
 }
 
 //Parse the arguments
-const packageJson = require('./package.json');
+const packageJson = require(path.join(['./package.json']));
 
 const program = new commander.Command(packageJson.name)
     .version(packageJson.version, '-v, --version')
