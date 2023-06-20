@@ -87,10 +87,6 @@ function runPack() {
 }
 
 function movePackageToTempDir(packagePath, destinationPath) {
-
-    console.log(`package path is: ${packagePath}`);
-    console.log(`destination path is: ${destinationPath}`);
-
     return new Promise((resolve, reject) => {
         fs.move(packagePath, destinationPath, { overwrite: true })
             .then(() => {
@@ -141,11 +137,8 @@ function linkDirGlobal(directory) {
             ]
 
             const currentWorkingDirectory = process.cwd();
-            console.log(`current working directory is ${directory}`);
-            process.chdir(directory);
 
-            console.log(`attempting to run command ${command} with args ${args} in directory ${directory}`);
-            //spawn.sync(command, args, { stdio: 'inherit' });
+            process.chdir(directory);
 
             const { exec } = require('child_process');
 
@@ -163,7 +156,6 @@ function linkDirGlobal(directory) {
             });
         }
         catch (err) {
-            console.log(`failed changing directory to ${directory}`);
             reject(err);
         }
 
@@ -240,15 +232,11 @@ function getTemporaryDirectory() {
                         if (settings === null) {
                             tmp.dir({ keep: true }, (err, tmpdir) => {
                                 if (err) {
-                                    console.log(`failed to create temporarary directory ${tmpdir}`);
                                     reject(err);
                                 } else {
-                                    console.log(`successfully created temporarary directory ${tmpdir}`);
-
                                     fs.writeJson(file, { TempPath: tmpdir })
                                         .then(() => {
-
-                                            console.log(`successfully created settings.json`);
+                                            console.log(`Added ${chalk.yellow(dirNameLocalPack)} directory. Please add ${dirNameLocalPack} to .gitignore`);
                                             resolve(tmpdir);
                                         })
                                         .catch(err => {
@@ -302,6 +290,7 @@ function deleteLocalPackSettingsDirectory() {
                 if (exists)
                     fs.remove(dirNameLocalPack)
                         .then(() => {
+                            console.log(`Removed ${chalk.yellow(dirNameLocalPack)} directory. You can remove ${dirNameLocalPack} from .gitignore`);
                             resolve();
                         })
                         .catch(err => {
@@ -326,7 +315,6 @@ function publish() {
             return getTemporaryDirectory();
         })
         .then((tempDir) => {
-            console.log(`temporary directory is : ${tempDir}`);
             return new Promise((resolve, reject) => {
                 const packageFilePath = `./${packageName}`;
                 const destinationPath = `${tempDir}/${packageName}`;
@@ -343,7 +331,6 @@ function publish() {
             return new Promise((resolve, reject) => {
                 return unpackPackage(unpackDetails.PackageFilePath, unpackDetails.PackageDir)
                     .then(() => {
-                        console.log('extracted the package');
                         resolve(unpackDetails.PackageDir);
                     })
                     .catch(err => {
@@ -415,7 +402,7 @@ const program = new Command();
 
 program
     .name('local-package-publisher')
-    .description('CLI to some JavaScript string utilities')
+    .description('A tool for publishing a package locally for testing')
     .version(packageJson.version);
 
 program
