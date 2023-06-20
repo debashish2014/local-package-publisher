@@ -402,7 +402,7 @@ const program = new Command();
 
 program
     .name('local-package-publisher')
-    .description('A tool for publishing a package locally for testing')
+    .description('A utility app for publishing your npm packages locally for testing')
     .version(packageJson.version);
 
 program
