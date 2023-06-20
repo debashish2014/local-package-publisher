@@ -30,7 +30,7 @@ const tmp = require('tmp');
 const read = require('fs').createReadStream;
 const unpack = require('tar-pack').unpack;
 const chalk = require('chalk');
-const commander = require('commander');
+const { Command } = require('commander');
 
 const dirNameLocalPack = '.local-pack';
 const configFile = 'settings.json';
@@ -45,15 +45,15 @@ function isNodeProject() {
     return new Promise((resolve, reject) => {
         fs.readJson('./package.json')
             .then(obj => {
-                if(obj.name.indexOf('@') === 0){
+                if (obj.name.indexOf('@') === 0) {
                     let indexOfSlash = obj.name.indexOf('/');
                     let scopeName = obj.name.substr(1, indexOfSlash - 1);
                     let nameExcludingScope = obj.name.substr(indexOfSlash + 1, obj.name.length);
-                    projectName = `${scopeName}-${nameExcludingScope}`;                    
-                }else{
+                    projectName = `${scopeName}-${nameExcludingScope}`;
+                } else {
                     projectName = obj.name;
                 }
-               
+
                 projectNameInPackageJson = obj.name;
                 packageName = `${projectName}-${obj.version}.${archiveName}`;
                 resolve(packageName);
@@ -127,18 +127,33 @@ function unpackPackage(packageFilePath, unpackDir) {
 
 function linkDirGlobal(directory) {
     return new Promise((resolve, reject) => {
-        let command;
-        let args;
-
-        command = 'npm';
-        args = [
-            'link'
-        ]
-
-        process.chdir(directory);
         try {
-            spawn.sync(command, args, { stdio: 'inherit' });
-            resolve();
+            let command;
+            let args;
+
+            command = 'npm';
+            args = [
+                'link'
+            ]
+
+            const currentWorkingDirectory = process.cwd();
+
+            process.chdir(directory);
+
+            const { exec } = require('child_process');
+
+            exec(`${command} ${args}`, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error);
+                }
+
+                if (stderr) {
+                    reject(stderr);
+                }
+
+                process.chdir(currentWorkingDirectory);
+                resolve();
+            });
         }
         catch (err) {
             reject(err);
@@ -147,7 +162,7 @@ function linkDirGlobal(directory) {
     });
 }
 
-function unlinkDirGlobal(directory) {
+function unlinkDirGlobal(packageDetails) {
     return new Promise((resolve, reject) => {
         fs.pathExists(file)
             .then((exists) => {
@@ -157,11 +172,12 @@ function unlinkDirGlobal(directory) {
 
                     command = 'npm';
                     args = [
-                        'unlink'
+                        'unlink',
+                        packageDetails.packageName
                     ]
 
                     const currentWorkingDirectory = process.cwd();
-                    process.chdir(directory);
+                    process.chdir(packageDetails.tempDirectory);
                     spawn.sync(command, args, { stdio: 'inherit' });
                     process.chdir(currentWorkingDirectory);
 
@@ -220,6 +236,7 @@ function getTemporaryDirectory() {
                                 } else {
                                     fs.writeJson(file, { TempPath: tmpdir })
                                         .then(() => {
+                                            console.log(`Added ${chalk.yellow(dirNameLocalPack)} directory. Please add ${dirNameLocalPack} to .gitignore`);
                                             resolve(tmpdir);
                                         })
                                         .catch(err => {
@@ -273,6 +290,7 @@ function deleteLocalPackSettingsDirectory() {
                 if (exists)
                     fs.remove(dirNameLocalPack)
                         .then(() => {
+                            console.log(`Removed ${chalk.yellow(dirNameLocalPack)} directory. You can remove ${dirNameLocalPack} from .gitignore`);
                             resolve();
                         })
                         .catch(err => {
@@ -321,13 +339,14 @@ function publish() {
             });
         })
         .then((packageDir) => {
-            linkDirGlobal(packageDir);
+            return linkDirGlobal(packageDir);
         })
         .then(() => {
             console.log(chalk.yellow(`${projectNameInPackageJson}`) + chalk.green(` package published successfully to global`));
             console.log('To consume this package, run ' + chalk.yellow(`npm link ${projectNameInPackageJson}`) + ' in target project');
         })
         .catch(err => {
+            console.log(err);
             fs.writeFile(`${process.cwd()}/${logFileName}`, err);
             console.log(chalk.red('Failed to publish package to global'));
         });
@@ -336,14 +355,25 @@ function publish() {
 //Removes the package from global
 function unpublish() {
     isNodeProject()
-        .then(() => {
-            return readTempDirectory();
-        })
-        .then((tempDir) => {
+        .then((packageName) => {
             return new Promise((resolve, reject) => {
-                unlinkDirGlobal(tempDir)
+                readTempDirectory()
+                    .then(tempDirectory => {
+                        resolve({
+                            tempDirectory,
+                            packageName
+                        })
+                    })
+                    .catch(err => {
+                        reject(err);
+                    });
+            });
+        })
+        .then((packageDetails) => {
+            return new Promise((resolve, reject) => {
+                unlinkDirGlobal(packageDetails)
                     .then(() => {
-                        resolve(tempDir);
+                        resolve(packageDetails.tempDirectory);
                     })
                     .catch(err => {
                         reject(err);
@@ -366,27 +396,36 @@ function unpublish() {
 
 //Parse the arguments
 const packageJson = require('./package.json');
+const { resolve } = require('path');
 
-const program = new commander.Command(packageJson.name)
-    .version(packageJson.version, '-v, --version')
-    .usage(`${chalk.yellow('[options]')}`)
+const program = new Command();
+
+program
+    .name('local-package-publisher')
+    .description('A utility app for publishing your npm packages locally for testing')
+    .version(packageJson.version);
+
+program
     .option('-p, --publish', 'publishes the project to global npm directory')
     .option('-u, --unpublish', 'removes the project from global npm directory')
-    .parse(process.argv);
 
-if (!program.publish && !program.unpublish) {
+program.parse(process.argv);
+
+const options = program.opts();
+
+if (!options.publish && !options.unpublish) {
     console.log(`${chalk.red('Please provide an option')} ${chalk.yellow('--publish')} ${chalk.red('or')} ${chalk.yellow('--unpublish')}`);
 }
 
-if (program.publish && program.unpublish) {
+if (options.publish && options.unpublish) {
     console.log(`${chalk.red('Either')} ${chalk.yellow('--publish')} ${chalk.red('or')} ${chalk.yellow('--unpublish')} ${chalk.red('option can only be passed at a time')}`);
 }
 
 //Run appropriate commands based on the option
-if (program.publish)
+if (options.publish)
     publish();
 
-if (program.unpublish)
+if (options.unpublish)
     unpublish();
 
 

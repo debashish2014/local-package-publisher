@@ -11,8 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\index.js",
-            "args": ["--unpublish"]
+            "program": "${workspaceFolder}/index.js",
+            "args": ["--publish"]
         }
     ]
 }
