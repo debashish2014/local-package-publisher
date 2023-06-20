@@ -30,7 +30,7 @@ const tmp = require('tmp');
 const read = require('fs').createReadStream;
 const unpack = require('tar-pack').unpack;
 const chalk = require('chalk');
-const commander = require('commander');
+const { Command } = require('commander');
 
 const dirNameLocalPack = '.local-pack';
 const configFile = 'settings.json';
@@ -45,15 +45,15 @@ function isNodeProject() {
     return new Promise((resolve, reject) => {
         fs.readJson('./package.json')
             .then(obj => {
-                if(obj.name.indexOf('@') === 0){
+                if (obj.name.indexOf('@') === 0) {
                     let indexOfSlash = obj.name.indexOf('/');
                     let scopeName = obj.name.substr(1, indexOfSlash - 1);
                     let nameExcludingScope = obj.name.substr(indexOfSlash + 1, obj.name.length);
-                    projectName = `${scopeName}-${nameExcludingScope}`;                    
-                }else{
+                    projectName = `${scopeName}-${nameExcludingScope}`;
+                } else {
                     projectName = obj.name;
                 }
-               
+
                 projectNameInPackageJson = obj.name;
                 packageName = `${projectName}-${obj.version}.${archiveName}`;
                 resolve(packageName);
@@ -87,6 +87,10 @@ function runPack() {
 }
 
 function movePackageToTempDir(packagePath, destinationPath) {
+
+    console.log(`package path is: ${packagePath}`);
+    console.log(`destination path is: ${destinationPath}`);
+
     return new Promise((resolve, reject) => {
         fs.move(packagePath, destinationPath, { overwrite: true })
             .then(() => {
@@ -127,27 +131,46 @@ function unpackPackage(packageFilePath, unpackDir) {
 
 function linkDirGlobal(directory) {
     return new Promise((resolve, reject) => {
-        let command;
-        let args;
-
-        command = 'npm';
-        args = [
-            'link'
-        ]
-
-        process.chdir(directory);
         try {
-            spawn.sync(command, args, { stdio: 'inherit' });
-            resolve();
+            let command;
+            let args;
+
+            command = 'npm';
+            args = [
+                'link'
+            ]
+
+            const currentWorkingDirectory = process.cwd();
+            console.log(`current working directory is ${directory}`);
+            process.chdir(directory);
+
+            console.log(`attempting to run command ${command} with args ${args} in directory ${directory}`);
+            //spawn.sync(command, args, { stdio: 'inherit' });
+
+            const { exec } = require('child_process');
+
+            exec(`${command} ${args}`, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error);
+                }
+
+                if (stderr) {
+                    reject(stderr);
+                }
+
+                process.chdir(currentWorkingDirectory);
+                resolve();
+            });
         }
         catch (err) {
+            console.log(`failed changing directory to ${directory}`);
             reject(err);
         }
 
     });
 }
 
-function unlinkDirGlobal(directory) {
+function unlinkDirGlobal(packageDetails) {
     return new Promise((resolve, reject) => {
         fs.pathExists(file)
             .then((exists) => {
@@ -157,11 +180,12 @@ function unlinkDirGlobal(directory) {
 
                     command = 'npm';
                     args = [
-                        'unlink'
+                        'unlink',
+                        packageDetails.packageName
                     ]
 
                     const currentWorkingDirectory = process.cwd();
-                    process.chdir(directory);
+                    process.chdir(packageDetails.tempDirectory);
                     spawn.sync(command, args, { stdio: 'inherit' });
                     process.chdir(currentWorkingDirectory);
 
@@ -216,10 +240,15 @@ function getTemporaryDirectory() {
                         if (settings === null) {
                             tmp.dir({ keep: true }, (err, tmpdir) => {
                                 if (err) {
+                                    console.log(`failed to create temporarary directory ${tmpdir}`);
                                     reject(err);
                                 } else {
+                                    console.log(`successfully created temporarary directory ${tmpdir}`);
+
                                     fs.writeJson(file, { TempPath: tmpdir })
                                         .then(() => {
+
+                                            console.log(`successfully created settings.json`);
                                             resolve(tmpdir);
                                         })
                                         .catch(err => {
@@ -297,6 +326,7 @@ function publish() {
             return getTemporaryDirectory();
         })
         .then((tempDir) => {
+            console.log(`temporary directory is : ${tempDir}`);
             return new Promise((resolve, reject) => {
                 const packageFilePath = `./${packageName}`;
                 const destinationPath = `${tempDir}/${packageName}`;
@@ -313,6 +343,7 @@ function publish() {
             return new Promise((resolve, reject) => {
                 return unpackPackage(unpackDetails.PackageFilePath, unpackDetails.PackageDir)
                     .then(() => {
+                        console.log('extracted the package');
                         resolve(unpackDetails.PackageDir);
                     })
                     .catch(err => {
@@ -321,13 +352,14 @@ function publish() {
             });
         })
         .then((packageDir) => {
-            linkDirGlobal(packageDir);
+            return linkDirGlobal(packageDir);
         })
         .then(() => {
             console.log(chalk.yellow(`${projectNameInPackageJson}`) + chalk.green(` package published successfully to global`));
             console.log('To consume this package, run ' + chalk.yellow(`npm link ${projectNameInPackageJson}`) + ' in target project');
         })
         .catch(err => {
+            console.log(err);
             fs.writeFile(`${process.cwd()}/${logFileName}`, err);
             console.log(chalk.red('Failed to publish package to global'));
         });
@@ -336,14 +368,25 @@ function publish() {
 //Removes the package from global
 function unpublish() {
     isNodeProject()
-        .then(() => {
-            return readTempDirectory();
-        })
-        .then((tempDir) => {
+        .then((packageName) => {
             return new Promise((resolve, reject) => {
-                unlinkDirGlobal(tempDir)
+                readTempDirectory()
+                    .then(tempDirectory => {
+                        resolve({
+                            tempDirectory,
+                            packageName
+                        })
+                    })
+                    .catch(err => {
+                        reject(err);
+                    });
+            });
+        })
+        .then((packageDetails) => {
+            return new Promise((resolve, reject) => {
+                unlinkDirGlobal(packageDetails)
                     .then(() => {
-                        resolve(tempDir);
+                        resolve(packageDetails.tempDirectory);
                     })
                     .catch(err => {
                         reject(err);
@@ -366,27 +409,36 @@ function unpublish() {
 
 //Parse the arguments
 const packageJson = require('./package.json');
+const { resolve } = require('path');
 
-const program = new commander.Command(packageJson.name)
-    .version(packageJson.version, '-v, --version')
-    .usage(`${chalk.yellow('[options]')}`)
+const program = new Command();
+
+program
+    .name('local-package-publisher')
+    .description('CLI to some JavaScript string utilities')
+    .version(packageJson.version);
+
+program
     .option('-p, --publish', 'publishes the project to global npm directory')
     .option('-u, --unpublish', 'removes the project from global npm directory')
-    .parse(process.argv);
 
-if (!program.publish && !program.unpublish) {
+program.parse(process.argv);
+
+const options = program.opts();
+
+if (!options.publish && !options.unpublish) {
     console.log(`${chalk.red('Please provide an option')} ${chalk.yellow('--publish')} ${chalk.red('or')} ${chalk.yellow('--unpublish')}`);
 }
 
-if (program.publish && program.unpublish) {
+if (options.publish && options.unpublish) {
     console.log(`${chalk.red('Either')} ${chalk.yellow('--publish')} ${chalk.red('or')} ${chalk.yellow('--unpublish')} ${chalk.red('option can only be passed at a time')}`);
 }
 
 //Run appropriate commands based on the option
-if (program.publish)
+if (options.publish)
     publish();
 
-if (program.unpublish)
+if (options.unpublish)
     unpublish();
 
 
