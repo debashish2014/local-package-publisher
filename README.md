@@ -8,7 +8,9 @@ A utility app for publishing your npm packages locally for testing.
 Version 1.0.5 has been tested to work with Windows 11, Mac OSX Ventura 13.4 & Ubuntu 22.10 Kinetic Kudu, with Node version 18 or higher.
 If it does not work on other versions, please feel free to raise an issue
 
-#### Note: This tool simply provides an easy way to publish a package globally on your local machine, so that it can be used in any other node project. It won't help you to build your package, neither it can automatically decide which files you want to include the package. It is upto the developer to decide it. By default, all the files in the project will get included in the package.
+## Note: 
+
+This tool simply provides an easy way to publish a package globally on your local machine, so that it can be used in any other node project. It won't help you to build your package, neither it can automatically decide which files you want to include the package. It is upto the developer to decide it. By default, all the files in the project will get included in the package.
 
 #### However, as a general guideline, whichever files you want to ship in the package that you are planning to publish to NPM, make sure you add them using the `files` property in package.json. To know more about it, you can follow this [link](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#files). Also, please set the entry point using `main` or `module` in package.json. Both can also be set depending on whether your package support CJS and ESM respectively.
 
