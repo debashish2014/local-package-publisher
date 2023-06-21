@@ -93,6 +93,35 @@ Now, to consume this published package, just go to the root directory of the pro
 ```
 npm link my-awesome-new-package
 ```
+This command won't update the package.json, but using this approach only one published package can be consumed at once.
+
+Say, you have multiple packages published, and you want to consume and test all of them, the above command is not going to work.
+
+The last link command will replace the previous package.
+
+If you want to consume multiple packages at once, run below command instead:
+
+```
+npm link my-awesome-new-package --save
+npm link another-awesome-new-package --save
+...
+```
+
+This will update the package.json though.
+
+If you want to remove the consumed packages, run below command:
+
+```
+npm unlink my-awesome-new-package
+```
+
+or
+
+```
+npm unlink my-awesome-new-package --save
+```
+to remove it from package.json
+
 **Note**: No need to run the above command again and again.
 
 #
